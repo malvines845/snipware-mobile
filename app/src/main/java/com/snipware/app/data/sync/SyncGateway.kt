@@ -1,0 +1,67 @@
+package com.snipware.app.data.sync
+
+import com.snipware.app.data.model.Snippet
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+
+/**
+ * Abstraction over remote sync -- Supabase in the original web app
+ * (see sync.js: SECTION 4 auth, SECTION 5 sync engine). Deliberately kept
+ * out of [com.snipware.app.data.repository.SnippetRepository]'s internals
+ * so swapping the no-op placeholder below for a real implementation never
+ * touches the repository, ViewModels, or UI.
+ *
+ * TODO(sync): implement with supabase-kt (postgrest-kt + realtime-kt +
+ * gotrue-kt: https://github.com/supabase-community/supabase-kt) once
+ * auth/sync is wanted. Behavior to match from sync.js:
+ *   - queue offline mutations (upsert/delete) in a local outbox, flush
+ *     when [isOnline] flips true (SYNC.flush)
+ *   - pull-on-login: fetch all rows for the current user, upsert locally
+ *     (SYNC.pull)
+ *   - realtime subscription on the `snippets` table, filtered by
+ *     user_id, to mirror live edits from other devices (SYNC.startRealtime)
+ *   - retry with a cap (original gives up after 5 retries per job)
+ */
+interface SyncGateway {
+    val isOnline: StateFlow<Boolean>
+    val currentUserId: StateFlow<String?>
+
+    suspend fun queueUpsert(snippet: Snippet)
+    suspend fun queueDelete(snippetId: String)
+    suspend fun pull(): List<Snippet>
+
+    suspend fun login(email: String, password: String): Result<Unit>
+    suspend fun register(email: String, password: String): Result<Unit>
+    suspend fun logout()
+}
+
+/**
+ * Local-only placeholder. Every snippet just stays in Room with
+ * syncStatus = PENDING forever -- functionally identical to the web app
+ * running fully offline / logged out. Swap this out in
+ * SnipwareApplication once real sync is implemented.
+ */
+class NoOpSyncGateway : SyncGateway {
+    override val isOnline: StateFlow<Boolean> = MutableStateFlow(false)
+    override val currentUserId: StateFlow<String?> = MutableStateFlow(null)
+
+    override suspend fun queueUpsert(snippet: Snippet) {
+        // no-op: local-only for now
+    }
+
+    override suspend fun queueDelete(snippetId: String) {
+        // no-op: local-only for now
+    }
+
+    override suspend fun pull(): List<Snippet> = emptyList()
+
+    override suspend fun login(email: String, password: String): Result<Unit> =
+        Result.failure(NotImplementedError("Supabase sync isn't wired up yet — see SyncGateway.kt"))
+
+    override suspend fun register(email: String, password: String): Result<Unit> =
+        Result.failure(NotImplementedError("Supabase sync isn't wired up yet — see SyncGateway.kt"))
+
+    override suspend fun logout() {
+        // no-op
+    }
+}

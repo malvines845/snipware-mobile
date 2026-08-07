@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        This XML theme only needs to exist for the manifest / window background
+        during app cold-start, before Compose takes over. All real theming
+        (colors, typography) lives in ui/theme/Theme.kt.
+    -->
+    <style name="Theme.Snipware" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/snip_bg</item>
+        <item name="android:statusBarColor">@color/snip_bg</item>
+        <item name="android:navigationBarColor">@color/snip_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

@@ -1,6 +1,7 @@
 package com.snipware.app.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -48,6 +48,7 @@ import com.snipware.app.util.TimeUtils
 /** Max lines of code shown in the collapsed preview -- mirrors previewH()'s intent in utils.js. */
 private const val PREVIEW_MAX_LINES = 6
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SnippetCard(
     snippet: Snippet,

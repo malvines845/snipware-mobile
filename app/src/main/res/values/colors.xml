@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Ported 1:1 from the original web app's CSS custom properties (--bg, --accent, etc.) -->
+    <!-- Ported 1:1 from the original web app's CSS custom properties (bg, accent, etc.) -->
     <color name="snip_bg">#1E1E1E</color>
     <color name="snip_surface">#252526</color>
     <color name="snip_surface2">#2D2D2E</color>

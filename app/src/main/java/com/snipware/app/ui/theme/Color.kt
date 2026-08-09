@@ -16,3 +16,18 @@ val SnipDanger = Color(0xFFFF4F4F)
 val SnipText = Color(0xFFE2E2E8)
 val SnipTextMid = Color(0xFF8F8F9A)
 val SnipTextDim = Color(0xFF5A5A64)
+
+// Additional tokens pulled from the original app's global.css that aren't
+// plain CSS custom properties but are used consistently enough to be
+// design-system colors in their own right.
+val SnipAccentGlow = Color(0x12A0FF6F)       // rgba(160,255,111,0.07)
+val SnipAccentGlowStrong = Color(0x26A0FF6F) // rgba(160,255,111,0.15) -- active filter chip bg
+val SnipPreviewText = Color(0xFFABB2BF)      // .cpreview text color
+val SnipLockBlue = Color(0xFF60A5FA)         // .lock-badge / locked-card ring
+val SnipLockBlueGlow = Color(0x1A60A5FA)     // rgba(96,165,250,0.1)
+val SnipMessyTitle = Color(0xFFC8C8D0)       // .card.messy .card-title
+val SnipMessyBorder = Color(0x38FF4F4F)      // rgba(255,79,79,0.22)
+val SnipSearchBg = Color(0xFF1D1D23)         // #searchBar background
+val SnipSearchBgFocus = Color(0xFF22222B)    // #searchBar:focus background
+val SnipSearchBorder = Color(0xFF48484F)     // #searchBar border
+val SnipSearchPlaceholder = Color(0xFF505060)

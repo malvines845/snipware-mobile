@@ -6,7 +6,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 /** Local persistence layer, replacing IndexedDB (SnipwareDB) from db.js. */
-@Database(entities = [SnippetEntity::class], version = 1, exportSchema = false)
+@Database(
+    entities = [SnippetEntity::class, SnippetFtsEntity::class],
+    version = 2,
+    exportSchema = false
+)
 abstract class SnipwareDatabase : RoomDatabase() {
 
     abstract fun snippetDao(): SnippetDao
@@ -21,7 +25,16 @@ abstract class SnipwareDatabase : RoomDatabase() {
                     context.applicationContext,
                     SnipwareDatabase::class.java,
                     "snipware.db"
-                ).build().also { instance = it }
+                )
+                    // v1 -> v2 added snippets_fts (see SnippetFtsEntity.kt). No
+                    // real user installs exist yet at this stage, so a real
+                    // Migration isn't written -- this wipes local data on
+                    // upgrade instead. Replace with a proper Migration before
+                    // this ships to anyone with data worth keeping.
+                    .fallbackToDestructiveMigration()
+                    .build()
+                    .also { instance = it }
             }
     }
 }
+

@@ -1,5 +1,6 @@
 package com.snipware.app.ui.home
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,28 +24,59 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.snipware.app.data.model.Snippet
 import com.snipware.app.ui.components.LanguageFilterRow
+import com.snipware.app.ui.components.PlaceholderFillDialog
 import com.snipware.app.ui.components.SnipSearchBar
 import com.snipware.app.ui.components.SnippetCard
 import com.snipware.app.ui.theme.SnipAccent
 import com.snipware.app.ui.theme.SnipBg
 import com.snipware.app.ui.theme.SnipTextDim
 import com.snipware.app.ui.theme.SnipTextMid
+import com.snipware.app.util.PlaceholderUtils
 
+/**
+ * onViewFull/onEdit are the only two callbacks that need to bubble up to
+ * the NavHost (both navigate elsewhere); copying and pin-toggling are
+ * self-contained here since they're just clipboard + ViewModel calls that
+ * don't leave this screen -- same split CodeViewerScreen uses.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onSnippetClick: (Snippet) -> Unit,
-    onAddClick: () -> Unit,
-    onCopy: (Snippet) -> Unit,
-    onLongPressSnippet: (Snippet) -> Unit
+    onViewFull: (Snippet) -> Unit,
+    onEdit: (Snippet) -> Unit,
+    onAddClick: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
+
+    var placeholderTarget by remember { mutableStateOf<Snippet?>(null) }
+
+    fun copyText(value: String, snippet: Snippet) {
+        clipboard.setText(AnnotatedString(value))
+        viewModel.registerCopy(snippet)
+        Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+    }
+
+    fun onCardCopy(snippet: Snippet) {
+        if (PlaceholderUtils.extract(snippet.code).isNotEmpty()) {
+            placeholderTarget = snippet
+        } else {
+            copyText(snippet.code, snippet)
+        }
+    }
 
     Scaffold(
         containerColor = SnipBg,
@@ -99,15 +131,27 @@ fun HomeScreen(
                     items(state.snippets, key = { it.id }) { snippet ->
                         SnippetCard(
                             snippet = snippet,
-                            onClick = { onSnippetClick(snippet) },
-                            onCopy = { onCopy(snippet) },
-                            onToggleFavorite = { viewModel.toggleFavorite(snippet) },
-                            onLongPress = { onLongPressSnippet(snippet) }
+                            onCopy = { onCardCopy(snippet) },
+                            onEdit = { onEdit(snippet) },
+                            onViewFull = { onViewFull(snippet) },
+                            onLongPress = { viewModel.toggleFavorite(snippet) }
                         )
                     }
                 }
             }
         }
+    }
+
+    placeholderTarget?.let { snippet ->
+        PlaceholderFillDialog(
+            placeholderNames = PlaceholderUtils.extract(snippet.code),
+            onDismiss = { placeholderTarget = null },
+            onConfirm = { values ->
+                val resolved = PlaceholderUtils.resolve(snippet.code, values)
+                placeholderTarget = null
+                copyText(resolved, snippet)
+            }
+        )
     }
 }
 

@@ -39,10 +39,9 @@ fun SnipwareNavHost(
             val vm: HomeViewModel = viewModel(factory = factory)
             HomeScreen(
                 viewModel = vm,
-                onSnippetClick = { navController.navigate(Routes.viewer(it.id)) },
-                onAddClick = { navController.navigate(Routes.editorNew()) },
-                onCopy = { vm.registerCopy(it) },
-                onLongPressSnippet = { navController.navigate(Routes.editorEdit(it.id)) }
+                onViewFull = { navController.navigate(Routes.viewer(it.id)) },
+                onEdit = { navController.navigate(Routes.editorEdit(it.id)) },
+                onAddClick = { navController.navigate(Routes.editorNew()) }
             )
         }
 

@@ -6,21 +6,22 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,40 +30,43 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.snipware.app.data.model.Snippet
-import com.snipware.app.ui.components.LanguageFilterRow
 import com.snipware.app.ui.components.PlaceholderFillDialog
 import com.snipware.app.ui.components.SnipSearchBar
 import com.snipware.app.ui.components.SnippetCard
-import com.snipware.app.ui.theme.SnipAccent
 import com.snipware.app.ui.theme.SnipBg
+import com.snipware.app.ui.theme.SnipText
 import com.snipware.app.ui.theme.SnipTextDim
 import com.snipware.app.ui.theme.SnipTextMid
 import com.snipware.app.util.PlaceholderUtils
 
 /**
- * onViewFull/onEdit are the only two callbacks that need to bubble up to
- * the NavHost (both navigate elsewhere); copying and pin-toggling are
- * self-contained here since they're just clipboard + ViewModel calls that
- * don't leave this screen -- same split CodeViewerScreen uses.
+ * Content only -- no Scaffold/TopAppBar/FAB of its own. Those live in the
+ * shared nav shell (SnipwareNavHost) now, matching the original's bottom
+ * nav bar (All/Pinned/New/Assistant/Account) instead of a top bar + FAB.
+ * Language filtering is intentionally not shown here -- it's headed for a
+ * sidebar later, not a chip row under the search bar.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
+    pinnedOnly: Boolean,
     onViewFull: (Snippet) -> Unit,
-    onEdit: (Snippet) -> Unit,
-    onAddClick: () -> Unit
+    onEdit: (Snippet) -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
 
     var placeholderTarget by remember { mutableStateOf<Snippet?>(null) }
+    var sortMenuExpanded by remember { mutableStateOf(false) }
+
+    val displaySnippets = if (pinnedOnly) state.snippets.filter { it.isFavorite } else state.snippets
 
     fun copyText(value: String, snippet: Snippet) {
         clipboard.setText(AnnotatedString(value))
@@ -78,65 +82,71 @@ fun HomeScreen(
         }
     }
 
-    Scaffold(
-        containerColor = SnipBg,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("Snipware", style = MaterialTheme.typography.titleLarge)
-                        Text(
-                            "${state.totalCount} snippets · ${state.favoriteCount} pinned",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = SnipTextMid
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = SnipBg)
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onAddClick, containerColor = SnipAccent) {
-                Icon(Icons.Filled.Add, contentDescription = "Add snippet", tint = SnipBg)
-            }
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(SnipBg)
-                .padding(padding)
-                .padding(horizontal = 16.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(SnipBg)
+            .padding(horizontal = 16.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(vertical = 10.dp)
         ) {
             SnipSearchBar(
                 query = state.query,
                 onQueryChange = viewModel::onQueryChange,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.weight(1f)
             )
 
-            LanguageFilterRow(
-                languages = state.allLanguagesInUse,
-                activeFilter = state.activeFilter,
-                onFilterSelected = viewModel::onFilterChange,
-                modifier = Modifier.padding(bottom = 8.dp)
+            Box(
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .size(7.dp)
+                    .clip(CircleShape)
+                    .background(SnipTextDim)
             )
 
-            if (state.snippets.isEmpty()) {
-                EmptyState(hasQuery = state.query.isNotBlank())
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    contentPadding = PaddingValues(bottom = 88.dp)
+            Box {
+                IconButton(onClick = { sortMenuExpanded = true }) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = "Sort options", tint = SnipTextMid)
+                }
+                DropdownMenu(
+                    expanded = sortMenuExpanded,
+                    onDismissRequest = { sortMenuExpanded = false }
                 ) {
-                    items(state.snippets, key = { it.id }) { snippet ->
-                        SnippetCard(
-                            snippet = snippet,
-                            onCopy = { onCardCopy(snippet) },
-                            onEdit = { onEdit(snippet) },
-                            onViewFull = { onViewFull(snippet) },
-                            onLongPress = { viewModel.toggleFavorite(snippet) }
+                    listOf(
+                        SortOrder.NEWEST to "Newest first",
+                        SortOrder.OLDEST to "Oldest first",
+                        SortOrder.AZ to "Title A-Z",
+                        SortOrder.ZA to "Title Z-A"
+                    ).forEach { (order, label) ->
+                        DropdownMenuItem(
+                            text = { Text(label, color = if (state.sortOrder == order) SnipText else SnipTextMid) },
+                            onClick = {
+                                viewModel.onSortChange(order)
+                                sortMenuExpanded = false
+                            }
                         )
                     }
+                }
+            }
+        }
+
+        if (displaySnippets.isEmpty()) {
+            EmptyState(hasQuery = state.query.isNotBlank(), pinnedOnly = pinnedOnly)
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(bottom = 24.dp)
+            ) {
+                items(displaySnippets, key = { it.id }) { snippet ->
+                    SnippetCard(
+                        snippet = snippet,
+                        onCopy = { onCardCopy(snippet) },
+                        onEdit = { onEdit(snippet) },
+                        onViewFull = { onViewFull(snippet) },
+                        onLongPress = { viewModel.toggleFavorite(snippet) }
+                    )
                 }
             }
         }
@@ -156,7 +166,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun EmptyState(hasQuery: Boolean) {
+private fun EmptyState(hasQuery: Boolean, pinnedOnly: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -170,15 +180,20 @@ private fun EmptyState(hasQuery: Boolean) {
                 tint = SnipTextDim,
                 modifier = Modifier.size(40.dp)
             )
+            val message = when {
+                hasQuery -> "No snippets match your search"
+                pinnedOnly -> "No pinned snippets yet"
+                else -> "No snippets yet"
+            }
             Text(
-                text = if (hasQuery) "No snippets match your search" else "No snippets yet",
+                text = message,
                 style = MaterialTheme.typography.bodyLarge,
                 color = SnipTextMid,
                 modifier = Modifier.padding(top = 12.dp)
             )
-            if (!hasQuery) {
+            if (!hasQuery && !pinnedOnly) {
                 Text(
-                    text = "Tap + to save your first one",
+                    text = "Tap New to save your first one",
                     style = MaterialTheme.typography.bodyMedium,
                     color = SnipTextDim,
                     modifier = Modifier.padding(top = 4.dp)

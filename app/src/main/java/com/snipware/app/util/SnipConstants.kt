@@ -9,14 +9,4 @@ object SnipConstants {
     val WARN_TAGS: Set<String> = setOf(
         "wip", "broken", "fix-later", "do-not-use", "TODO", "urgent", "URGENT"
     )
-
-    /**
-     * Library size above which search does an FTS4 pre-filter pass before
-     * native fuzzy scoring, instead of scoring every snippet on every
-     * keystroke. Below this, the full native scan runs directly -- it's
-     * already fast at this scale, and it's the only path that gives
-     * edit-distance typo tolerance (e.g. "phyton" -> "Python"), which a
-     * plain FTS MATCH can't do. See SnippetRepository.search().
-     */
-    const val FTS_PREFILTER_THRESHOLD = 300
 }

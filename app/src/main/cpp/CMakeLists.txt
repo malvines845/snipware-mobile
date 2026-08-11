@@ -4,7 +4,7 @@ project("fuzzysearch")
 add_library(
         fuzzysearch
         SHARED
-        fuzzy_search.cpp
+        search_engine.cpp
 )
 
 find_library(log-lib log)

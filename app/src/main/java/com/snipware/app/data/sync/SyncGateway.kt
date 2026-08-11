@@ -30,17 +30,18 @@ interface SyncGateway {
     suspend fun queueDelete(snippetId: String)
 
     /**
-     * Fetches remote snippets to merge in locally (upserted via
-     * SnippetDao.upsertWithFts, so the FTS index stays in sync -- see
-     * SnippetRepository.syncPull()).
+     * Fetches remote snippets to merge in locally (see
+     * SnippetRepository.syncPull(), which writes them to Room and keeps the
+     * native search index in sync).
      *
      * NOTE for the real implementation: this signature only communicates
      * additions/updates, not remote deletions. A real sync engine needs its
      * own way to learn "these IDs were deleted elsewhere" (e.g. tombstone
      * rows, a deleted-since cursor, or a realtime DELETE event) and must
-     * route that through SnippetDao.deleteWithFts -- same as any local
-     * delete -- or a snippet removed on another device will keep showing up
-     * in search here forever even after syncPull() runs.
+     * route that through SnippetRepository.delete() -- same as any local
+     * delete, so both Room and the search index stay consistent -- or a
+     * snippet removed on another device will keep showing up in search here
+     * forever even after syncPull() runs.
      */
     suspend fun pull(): List<Snippet>
 

@@ -7,8 +7,8 @@ import androidx.room.RoomDatabase
 
 /** Local persistence layer, replacing IndexedDB (SnipwareDB) from db.js. */
 @Database(
-    entities = [SnippetEntity::class, SnippetFtsEntity::class],
-    version = 2,
+    entities = [SnippetEntity::class],
+    version = 3,
     exportSchema = false
 )
 abstract class SnipwareDatabase : RoomDatabase() {
@@ -26,7 +26,9 @@ abstract class SnipwareDatabase : RoomDatabase() {
                     SnipwareDatabase::class.java,
                     "snipware.db"
                 )
-                    // v1 -> v2 added snippets_fts (see SnippetFtsEntity.kt). No
+                    // v1 -> v2 added snippets_fts; v2 -> v3 removed it again --
+                    // search indexing moved to a native in-memory engine (see
+                    // data/search/SearchEngine.kt) instead of SQLite FTS4. No
                     // real user installs exist yet at this stage, so a real
                     // Migration isn't written -- this wipes local data on
                     // upgrade instead. Replace with a proper Migration before

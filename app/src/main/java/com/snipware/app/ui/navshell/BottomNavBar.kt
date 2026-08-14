@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -51,6 +52,11 @@ fun SnipBottomNav(
             .fillMaxWidth()
             .background(SnipSurface)
             .border(width = 1.dp, color = SnipBorder)
+            // Background/border above still reach the true screen edge
+            // (behind the gesture area) so there's no gap/seam there --
+            // this only pushes the tappable icons+labels below up above
+            // the system nav bar so they stay reachable.
+            .navigationBarsPadding()
             .padding(vertical = 8.dp, horizontal = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically

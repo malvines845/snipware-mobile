@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -147,6 +148,7 @@ fun CodeViewerScreen(
                 .fillMaxSize()
                 .background(SnipBg)
                 .padding(padding)
+                .navigationBarsPadding()
         ) {
             if (snippet != null) {
                 SoraCodeEditor(
